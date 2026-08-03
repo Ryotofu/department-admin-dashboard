@@ -25,29 +25,46 @@ function Login() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userEmail = userCredential.user.email?.toLowerCase();
 
-      // 2. Dispatch login notification email directly using your EmailJS credentials
-      try {
-        await emailjs.send(
-          'service_id265eu',   // 👈 Paste your EmailJS Service ID here
-          'template_jj65n7c',  // 👈 Paste your EmailJS Template ID here
-          {
-            to_email: userEmail,
-            login_time: new Date().toLocaleString(),
-          },
-          'G7C0i2J4eS7lsxFN_'    // 👈 Paste your EmailJS Public Key here
-        );
-      } catch (emailErr) {
-        // Log warning in console without stopping user login if email fails
-        console.warn('Login notification email could not be sent:', emailErr);
+      // 2. Identify Department Route and Name based on account email
+      let targetRoute = '/';
+      let departmentName = '';
+
+      if (userEmail === 'dracotail14@gmail.com') {
+        targetRoute = '/fire';
+        departmentName = 'Fire Department';
+      } else if (userEmail === 'u6411824@gmaill.com') {
+        targetRoute = '/police';
+        departmentName = 'Police Department';
+      } else if (userEmail === 'vodkanamo@gmail.com') {
+        targetRoute = '/medical';
+        departmentName = 'Medical Department';
       }
 
-      // 3. Route user to their department dashboard
-      if (userEmail === 'dracotail14@gmail.com') {
-        navigate('/fire');
-      } else if (userEmail === 'u6411824@gmail.com') {
-        navigate('/police');
-      } else if (userEmail === 'vodkanamo@gmail.com') {
-        navigate('/medical');
+      // 3. Construct custom security warning message
+      const customMessage = `Someone has signed in on your account. If it is not you please contact immediately ethan_josh_nora@dlsl.edu.ph or call my number 09561237956. (Logged in at: ${new Date().toLocaleString()})`;
+
+      // 4. Send email notification via EmailJS with spam-prevention parameters
+      try {
+        await emailjs.send(
+          'service_id265eu',   // 👈 Replace with your EmailJS Service ID
+          'template_jj65n7c',  // 👈 Replace with your EmailJS Template ID
+          {
+            to_email: userEmail,
+            from_name: 'LGU Security System',                     // Identifies the trusted sender name
+            reply_to: 'ethan_josh_nora@dlsl.edu.ph',              // Valid reply address prevents spam classification
+            message: customMessage,
+            subject_title: `Security Alert: ${departmentName} Account Sign-In`,
+          },
+          'G7C0i2J4eS7lsxFN_'    // 👈 Replace with your EmailJS Public Key
+        );
+        console.log('Login security email successfully sent!');
+      } catch (emailErr) {
+        console.warn('Login notification email warning:', emailErr);
+      }
+
+      // 5. Navigate authorized user to dashboard
+      if (targetRoute !== '/') {
+        navigate(targetRoute);
       } else {
         setError('Unauthorized department account.');
       }
