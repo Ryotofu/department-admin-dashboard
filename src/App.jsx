@@ -9,45 +9,9 @@ import PoliceDashboard from './pages/PoliceDashboard';
 import MedicalDashboard from './pages/MedicalDashboard';
 
 // EmailJS Credentials Configuration
-const EMAILJS_SERVICE_ID = 'service_id265eu';
-const EMAILJS_TEMPLATE_ID = 'template_jj65n7c';
-const EMAILJS_PUBLIC_KEY = 'G7C0i2J4eS7lsxFN_';
-
-/**
- * Universal Email Dispatcher
- * Can be used by both LGU Admin and Department Admins.
- * 
- * @param {string} toEmail - Recipient's email address
- * @param {string} subjectTitle - Subject line of the email
- * @param {string} messageContent - Plain text or custom message body
- * @param {string} senderName - Neutral system sender name (Defaults to 'LGU Portal System')
- */
-export const sendEmailNotification = async (
-  toEmail, 
-  subjectTitle, 
-  messageContent, 
-  senderName = 'LGU Portal System'
-) => {
-  try {
-    const response = await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID,
-      {
-        to_email: toEmail,
-        from_name: senderName, // 👈 Sends neutral system sender name
-        subject_title: subjectTitle,
-        message: messageContent,
-        reply_to: 'ethan_josh_nora@dlsl.edu.ph',
-      },
-      EMAILJS_PUBLIC_KEY
-    );
-    console.log('Email notification successfully sent:', response.status);
-    return true;
-  } catch (error) {
-    console.warn('Email dispatch error:', error);
-    return false;
-  }
-};
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
 
 function Login() {
   const navigate = useNavigate();
@@ -59,20 +23,20 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault(); 
 
-    // Guard Clause: Prevent double submissions on fast clicks
+    // Guard Clause: Instantly prevent double-submissions on fast clicks
     if (loading) return;
 
     setError('');
     setLoading(true);
 
     try {
-      // 1. Firebase Authentication
+      // 1. Authenticate credentials via Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userEmail = userCredential.user.email?.toLowerCase();
 
-      // 2. Map route and department details
+      // 2. Identify Department Route and Name
       let targetRoute = '/';
-      let departmentName = '';
+      let departmentName = 'Department Account';
 
       if (userEmail === 'dracotail14@gmail.com') {
         targetRoute = '/fire';
@@ -85,18 +49,66 @@ function Login() {
         departmentName = 'Medical Department';
       }
 
-      // 3. Construct security alert string
-      const loginAlertMessage = `Someone has signed in on your account. If it is not you please contact immediately ethan_josh_nora@dlsl.edu.ph or call my number 09561237956. (Logged in at: ${new Date().toLocaleString()})`;
+      // 3. Build professional HTML-formatted message
+      const loginTimestamp = new Date().toLocaleString();
+      const professionalHtmlMessage = `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff; color: #334155;">
+          
+          <!-- Header -->
+          <div style="border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px;">
+            <h2 style="color: #0f172a; margin: 0; font-size: 18px; font-weight: 800; letter-spacing: 0.5px;">LGU PORTAL SYSTEM</h2>
+            <span style="color: #2563eb; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Official Account Notice</span>
+          </div>
 
-      // 4. Dispatch security email with neutral sender name
-      await sendEmailNotification(
-        userEmail,
-        `Security Alert: ${departmentName} Account Sign-In`,
-        loginAlertMessage,
-        'LGU Portal System' // Neutral from_name
-      );
+          <!-- Body Content -->
+          <p style="font-size: 14px; line-height: 1.6; margin-top: 0;">
+            A sign-in activity was recorded for your <strong>${departmentName}</strong> portal account.
+          </p>
 
-      // 5. Route user to respective dashboard
+          <!-- Timestamp Callout -->
+          <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 16px; margin: 18px 0; border-radius: 4px; font-size: 13px;">
+            <strong>Logged in at:</strong> ${loginTimestamp}
+          </div>
+
+          <!-- Security Note -->
+          <p style="font-size: 13px; line-height: 1.5; color: #475569;">
+            If you did not initiate this login, please contact system administration immediately:
+          </p>
+
+          <ul style="font-size: 13px; color: #334155; padding-left: 20px; margin: 10px 0 20px 0; line-height: 1.6;">
+            <li>Email: <a href="mailto:ethan_josh_nora@dlsl.edu.ph" style="color: #2563eb; text-decoration: none; font-weight: bold;">ethan_josh_nora@dlsl.edu.ph</a></li>
+            <li>Phone: <strong>09561237956</strong></li>
+          </ul>
+
+          <!-- Footer -->
+          <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0 12px 0;" />
+          <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">
+            This is an automated notification sent by the LGU Portal System. Please do not reply directly to this email.
+          </p>
+
+        </div>
+      `;
+
+      // 4. Send email dispatch with neutral subject and HTML payload
+      try {
+        await emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          {
+            to_email: userEmail,
+            from_name: 'LGU Portal System',
+            subject_title: 'LGU Portal System - Account Activity Alert', // 👈 Neutral Subject
+            message: professionalHtmlMessage,
+            reply_to: 'ethan_josh_nora@dlsl.edu.ph',
+          },
+          EMAILJS_PUBLIC_KEY
+        );
+        console.log('Professional security notification dispatched successfully!');
+      } catch (emailErr) {
+        console.warn('Email dispatch warning:', emailErr);
+      }
+
+      // 5. Navigate authorized user to their dashboard
       if (targetRoute !== '/') {
         navigate(targetRoute);
       } else {
