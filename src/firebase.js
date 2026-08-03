@@ -1,6 +1,7 @@
 // 1. You MUST have these two imports at the top:
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore"; 
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth'; // 👈 This line defines getAuth!
+import { getFirestore } from 'firebase/firestore';
 
 // 2. Your keys stay exactly the same:
 const firebaseConfig = {
