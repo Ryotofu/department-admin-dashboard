@@ -23,14 +23,14 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault(); 
 
-    // Guard Clause: Instantly prevent double-submissions on fast clicks
+    // Guard Clause: Prevent rapid double-click dispatches
     if (loading) return;
 
     setError('');
     setLoading(true);
 
     try {
-      // 1. Authenticate credentials via Firebase
+      // 1. Authenticate user credentials via Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userEmail = userCredential.user.email?.toLowerCase();
 
@@ -49,47 +49,48 @@ function Login() {
         departmentName = 'Medical Department';
       }
 
-      // 3. Build professional HTML-formatted message
+      // 3. Construct professional HTML email content
       const loginTimestamp = new Date().toLocaleString();
-      const professionalHtmlMessage = `
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff; color: #334155;">
+      
+      const htmlEmailTemplate = `
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #ffffff; color: #334155;">
           
-          <!-- Header -->
-          <div style="border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px;">
-            <h2 style="color: #0f172a; margin: 0; font-size: 18px; font-weight: 800; letter-spacing: 0.5px;">LGU PORTAL SYSTEM</h2>
-            <span style="color: #2563eb; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Official Account Notice</span>
+          <!-- Header Bar -->
+          <div style="border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 16px;">
+            <h2 style="color: #0f172a; margin: 0; font-size: 18px; font-weight: 800;">LGU PORTAL SYSTEM</h2>
+            <span style="color: #2563eb; font-size: 11px; font-weight: 700; text-transform: uppercase;">Official Account Notice</span>
           </div>
 
-          <!-- Body Content -->
-          <p style="font-size: 14px; line-height: 1.6; margin-top: 0;">
-            A sign-in activity was recorded for your <strong>${departmentName}</strong> portal account.
+          <!-- Alert Body -->
+          <p style="font-size: 14px; line-height: 1.5; margin-top: 0;">
+            A sign-in activity was recorded for your <strong>${departmentName}</strong> account.
           </p>
 
-          <!-- Timestamp Callout -->
-          <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 16px; margin: 18px 0; border-radius: 4px; font-size: 13px;">
-            <strong>Logged in at:</strong> ${loginTimestamp}
+          <!-- Callout Box -->
+          <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 14px; margin: 16px 0; border-radius: 4px; font-size: 13px;">
+            <strong>Login Timestamp:</strong> ${loginTimestamp}
           </div>
 
-          <!-- Security Note -->
-          <p style="font-size: 13px; line-height: 1.5; color: #475569;">
-            If you did not initiate this login, please contact system administration immediately:
+          <!-- Contact Details -->
+          <p style="font-size: 13px; line-height: 1.5; color: #475569; margin-bottom: 8px;">
+            If you did not perform this login, please contact support immediately:
           </p>
 
-          <ul style="font-size: 13px; color: #334155; padding-left: 20px; margin: 10px 0 20px 0; line-height: 1.6;">
-            <li>Email: <a href="mailto:ethan_josh_nora@dlsl.edu.ph" style="color: #2563eb; text-decoration: none; font-weight: bold;">ethan_josh_nora@dlsl.edu.ph</a></li>
+          <ul style="font-size: 13px; color: #334155; padding-left: 20px; margin: 0 0 16px 0; line-height: 1.6;">
+            <li>Email: <a href="mailto:ethan_josh_nora@dlsl.edu.ph" style="color: #2563eb; font-weight: bold; text-decoration: none;">ethan_josh_nora@dlsl.edu.ph</a></li>
             <li>Phone: <strong>09561237956</strong></li>
           </ul>
 
-          <!-- Footer -->
-          <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0 12px 0;" />
+          <!-- Footer Disclaimer -->
+          <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 16px 0 10px 0;" />
           <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">
-            This is an automated notification sent by the LGU Portal System. Please do not reply directly to this email.
+            This is an automated system notification from the LGU Portal.
           </p>
 
         </div>
       `;
 
-      // 4. Send email dispatch with neutral subject and HTML payload
+      // 4. Send email dispatch with raw HTML payload
       try {
         await emailjs.send(
           EMAILJS_SERVICE_ID,
@@ -97,18 +98,18 @@ function Login() {
           {
             to_email: userEmail,
             from_name: 'LGU Portal System',
-            subject_title: 'LGU Portal System - Account Activity Alert', // 👈 Neutral Subject
-            message: professionalHtmlMessage,
+            subject_title: 'LGU Portal System - Account Activity Alert',
+            message: htmlEmailTemplate, // 👈 Expects {{{message}}} in EmailJS Dashboard
             reply_to: 'ethan_josh_nora@dlsl.edu.ph',
           },
           EMAILJS_PUBLIC_KEY
         );
-        console.log('Professional security notification dispatched successfully!');
+        console.log('HTML Security Alert Email dispatched successfully!');
       } catch (emailErr) {
         console.warn('Email dispatch warning:', emailErr);
       }
 
-      // 5. Navigate authorized user to their dashboard
+      // 5. Route authorized user to dashboard
       if (targetRoute !== '/') {
         navigate(targetRoute);
       } else {
