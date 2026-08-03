@@ -42,11 +42,11 @@ function Login() {
       }
 
       // 3. Route user to their department dashboard
-      if (userEmail === 'firedept@gmail.com') {
+      if (userEmail === 'dracotail14@gmail.com') {
         navigate('/fire');
-      } else if (userEmail === 'policedept@gmail.com') {
+      } else if (userEmail === 'u6411824@gmail.com') {
         navigate('/police');
-      } else if (userEmail === 'medicaldept@gmail.com') {
+      } else if (userEmail === 'vodkanamo@gmail.com') {
         navigate('/medical');
       } else {
         setError('Unauthorized department account.');
