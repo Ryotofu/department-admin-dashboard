@@ -12,6 +12,11 @@ const firebaseConfig = {
   appId: "1:1012159203170:web:6c866f429dbc1b25724e3b"
 };
 
-// 3. You MUST have these two lines at the very bottom:
+// 2. Initialize the core Firebase App
 const app = initializeApp(firebaseConfig);
+
+// 3. Initialize and EXPORT the services your app needs
+export const auth = getAuth(app); // 👈 This missing export caused the build error!
 export const db = getFirestore(app);
+
+export default app;
