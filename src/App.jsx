@@ -9,9 +9,9 @@ import PoliceDashboard from './pages/PoliceDashboard';
 import MedicalDashboard from './pages/MedicalDashboard';
 
 // EmailJS Credentials Configuration
-const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
-const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
+const EMAILJS_SERVICE_ID = 'service_id265eu';
+const EMAILJS_TEMPLATE_ID = 'template_jj65n7c';
+const EMAILJS_PUBLIC_KEY = 'G7C0i2J4eS7lsxFN_';
 
 function Login() {
   const navigate = useNavigate();
