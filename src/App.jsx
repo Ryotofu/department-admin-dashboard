@@ -8,6 +8,47 @@ import FireDashboard from './pages/FireDashboard';
 import PoliceDashboard from './pages/PoliceDashboard';
 import MedicalDashboard from './pages/MedicalDashboard';
 
+// EmailJS Credentials Configuration
+const EMAILJS_SERVICE_ID = 'service_id265eu';
+const EMAILJS_TEMPLATE_ID = 'template_jj65n7c';
+const EMAILJS_PUBLIC_KEY = 'G7C0i2J4eS7lsxFN_';
+
+/**
+ * Universal Email Dispatcher
+ * Can be used by both LGU Admin and Department Admins.
+ * 
+ * @param {string} toEmail - Recipient's email address
+ * @param {string} subjectTitle - Subject line of the email
+ * @param {string} messageContent - Plain text or custom message body
+ * @param {string} senderName - Neutral system sender name (Defaults to 'LGU Portal System')
+ */
+export const sendEmailNotification = async (
+  toEmail, 
+  subjectTitle, 
+  messageContent, 
+  senderName = 'LGU Portal System'
+) => {
+  try {
+    const response = await emailjs.send(
+      EMAILJS_SERVICE_ID,
+      EMAILJS_TEMPLATE_ID,
+      {
+        to_email: toEmail,
+        from_name: senderName, // 👈 Sends neutral system sender name
+        subject_title: subjectTitle,
+        message: messageContent,
+        reply_to: 'ethan_josh_nora@dlsl.edu.ph',
+      },
+      EMAILJS_PUBLIC_KEY
+    );
+    console.log('Email notification successfully sent:', response.status);
+    return true;
+  } catch (error) {
+    console.warn('Email dispatch error:', error);
+    return false;
+  }
+};
+
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -17,15 +58,19 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault(); 
+
+    // Guard Clause: Prevent double submissions on fast clicks
+    if (loading) return;
+
     setError('');
     setLoading(true);
 
     try {
-      // 1. Authenticate user credentials with Firebase
+      // 1. Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userEmail = userCredential.user.email?.toLowerCase();
 
-      // 2. Identify Department Route and Name based on account email
+      // 2. Map route and department details
       let targetRoute = '/';
       let departmentName = '';
 
@@ -40,29 +85,18 @@ function Login() {
         departmentName = 'Medical Department';
       }
 
-      // 3. Construct custom security warning message
-      const customMessage = `Someone has signed in on your account. If it is not you please contact immediately ethan_josh_nora@dlsl.edu.ph or call my number 09561237956. (Logged in at: ${new Date().toLocaleString()})`;
+      // 3. Construct security alert string
+      const loginAlertMessage = `Someone has signed in on your account. If it is not you please contact immediately ethan_josh_nora@dlsl.edu.ph or call my number 09561237956. (Logged in at: ${new Date().toLocaleString()})`;
 
-      // 4. Send email notification via EmailJS with spam-prevention parameters
-      try {
-        await emailjs.send(
-          'service_id265eu',   // 👈 Replace with your EmailJS Service ID
-          'template_jj65n7c',  // 👈 Replace with your EmailJS Template ID
-          {
-            to_email: userEmail,
-            from_name: 'LGU Security System',                     // Identifies the trusted sender name
-            reply_to: 'ethan_josh_nora@dlsl.edu.ph',              // Valid reply address prevents spam classification
-            message: customMessage,
-            subject_title: `Security Alert: ${departmentName} Account Sign-In`,
-          },
-          'G7C0i2J4eS7lsxFN_'    // 👈 Replace with your EmailJS Public Key
-        );
-        console.log('Login security email successfully sent!');
-      } catch (emailErr) {
-        console.warn('Login notification email warning:', emailErr);
-      }
+      // 4. Dispatch security email with neutral sender name
+      await sendEmailNotification(
+        userEmail,
+        `Security Alert: ${departmentName} Account Sign-In`,
+        loginAlertMessage,
+        'LGU Portal System' // Neutral from_name
+      );
 
-      // 5. Navigate authorized user to dashboard
+      // 5. Route user to respective dashboard
       if (targetRoute !== '/') {
         navigate(targetRoute);
       } else {
@@ -125,7 +159,7 @@ function Login() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-3 rounded shadow-md transition-colors disabled:opacity-50"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg py-3 rounded shadow-md transition-colors disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'LOGGING IN...' : 'LOGIN TO DASHBOARD'}
           </button>
