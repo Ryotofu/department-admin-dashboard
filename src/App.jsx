@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-// 1. Import Firebase auth methods and initialized auth instance
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from './firebase'; // Adjust this path if your firebase configuration file is located elsewhere
+import emailjs from '@emailjs/browser';
+import { auth } from './firebase';
 
 import FireDashboard from './pages/FireDashboard';
 import PoliceDashboard from './pages/PoliceDashboard';
@@ -21,11 +21,27 @@ function Login() {
     setLoading(true);
 
     try {
-      // 2. Authenticate user credentials with Firebase Cloud
+      // 1. Authenticate user credentials with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userEmail = userCredential.user.email?.toLowerCase();
 
-      // 3. Navigate user based on authenticated account email
+      // 2. Dispatch login notification email directly using your EmailJS credentials
+      try {
+        await emailjs.send(
+          'service_id265eu',   // 👈 Paste your EmailJS Service ID here
+          'template_jj65n7c',  // 👈 Paste your EmailJS Template ID here
+          {
+            to_email: userEmail,
+            login_time: new Date().toLocaleString(),
+          },
+          'G7C0i2J4eS7lsxFN_'    // 👈 Paste your EmailJS Public Key here
+        );
+      } catch (emailErr) {
+        // Log warning in console without stopping user login if email fails
+        console.warn('Login notification email could not be sent:', emailErr);
+      }
+
+      // 3. Route user to their department dashboard
       if (userEmail === 'firedept@gmail.com') {
         navigate('/fire');
       } else if (userEmail === 'policedept@gmail.com') {
@@ -36,7 +52,6 @@ function Login() {
         setError('Unauthorized department account.');
       }
     } catch (err) {
-      // Handle Firebase authentication errors gracefully
       if (
         err.code === 'auth/invalid-credential' || 
         err.code === 'auth/wrong-password' || 
