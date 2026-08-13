@@ -41,7 +41,7 @@ function Login() {
       if (userEmail === 'dracotail14@gmail.com') {
         targetRoute = '/fire';
         departmentName = 'Fire Department';
-      } else if (userEmail === 'u6411824@gmaill.com') {
+      } else if (userEmail === 'u6411824@gmail.com') {
         targetRoute = '/police';
         departmentName = 'Police Department';
       } else if (userEmail === 'vodkanamo@gmail.com') {
