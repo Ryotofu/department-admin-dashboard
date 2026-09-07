@@ -4,9 +4,12 @@ import { db } from '../firebase';
 import { Link } from 'react-router-dom';
 import HistoryAnalytics from './HistoryAnalytics';
 import InstructionManualModal from './InstructionManualModal';
+import IncomingReportModal from './IncomingReportModal';
 
 function MedicalDashboard() {
   const [reports, setReports] = useState([]);
+  const [incomingReport, setIncomingReport] = useState(null);
+const [isAlarmOpen, setIsAlarmOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [editSeverity, setEditSeverity] = useState('');
   const [editStatus, setEditStatus] = useState('');
@@ -21,6 +24,17 @@ function MedicalDashboard() {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'reports'), (snapshot) => {
+      // Add this inside useEffect before mapping docs:
+snapshot.docChanges().forEach((change) => {
+  if (change.type === 'added') {
+    const newDoc = { id: change.doc.id, ...change.doc.data() };
+    const status = (newDoc.policeStatus || newDoc.status || 'PENDING').toUpperCase();
+    if (status === 'PENDING') {
+      setIncomingReport(newDoc);
+      setIsAlarmOpen(true);
+    }
+  }
+});
       const reportsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       const medicalReports = reportsData.filter(r => {
@@ -857,13 +871,21 @@ function MedicalDashboard() {
       </div> 
       {/* ⬆️ THIS </div> CLOSES THE PRINT CONTAINER (hidden print:block) */}
 
-      {/* ========================================================= */}
-      {/* 📖 PLACE THE MODAL HERE (Outside the print container)    */}
-      {/* ========================================================= */}
-      <InstructionManualModal 
-        isOpen={isManualOpen} 
-        onClose={() => setIsManualOpen(false)} 
-      />
+{/* ========================================================= */}
+        {/* 📖 PLACE THE MODAL HERE (Outside the print container)     */}
+        {/* ========================================================= */}
+        <InstructionManualModal
+          isOpen={isManualOpen}
+          onClose={() => setIsManualOpen(false)}
+        />
+
+        {/* 🚨 INCOMING EMERGENCY REPORT ALARM MODAL */}
+        <IncomingReportModal 
+          isOpen={isAlarmOpen}
+          onClose={() => setIsAlarmOpen(false)}
+          reportData={incomingReport}
+          departmentName="MEDICAL"
+        />
 
     </>
   );
