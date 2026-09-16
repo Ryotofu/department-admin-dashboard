@@ -1,5 +1,15 @@
 import React from 'react';
 
+/**
+ * EulaModal Component - Department Admin / Command Center Edition
+ * 
+ * Displays the End-User License Agreement tailored for LGU emergency dispatchers
+ * handling incoming incident reports, citizen identity verification, and case resolution.
+ * 
+ * Props:
+ * @param {boolean} isOpen - Controls visibility of the modal dialog.
+ * @param {function} onClose - Callback function to close the modal.
+ */
 function EulaModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
@@ -10,11 +20,13 @@ function EulaModal({ isOpen, onClose }) {
         {/* Modal Header */}
         <div className="bg-[#1E3A8A] text-white px-6 py-4 flex justify-between items-center shrink-0">
           <h2 className="font-black text-lg tracking-wider uppercase flex items-center gap-2">
-            📜 End-User License Agreement (EULA)
+            📜 Command Center EULA (Department Admin)
           </h2>
           <button 
+            type="button"
             onClick={onClose}
-            className="text-white hover:bg-white/20 px-2.5 py-1 rounded-full font-bold transition-colors"
+            className="text-white hover:bg-white/20 px-2.5 py-1 rounded-full font-bold transition-colors cursor-pointer"
+            aria-label="Close EULA Modal"
           >
             ✕
           </button>
@@ -23,67 +35,60 @@ function EulaModal({ isOpen, onClose }) {
         {/* Modal Content Scroll Area */}
         <div className="p-6 overflow-y-auto space-y-4 text-gray-800 text-sm leading-relaxed">
           <p className="font-bold text-xs text-gray-500 uppercase border-b pb-2">
-            Last Updated: July 14, 2026
+            Last Updated: July 14, 2026 | Administrative Protocol Version 2.0
           </p>
 
           <p>
-            This End-User License Agreement ("EULA") is a legal agreement between you (the "Citizen User" / "Reporter") and the developers and administrators of <strong>iReport: Real-Time Image-Based Incident Report and Response Platform</strong> for the Local Government Unit (LGU) of Mataasnakahoy, Lipa City.
+            This End-User License Agreement ("EULA") is a legal agreement between you (the "Department Admin" / "Command Center Dispatcher") and the developers of <strong>iReport: Real-Time Image-Based Incident Report and Response Platform</strong> for the Local Government Unit (LGU) of Mataasnakahoy.
           </p>
 
           <div className="p-3 bg-blue-50 border-l-4 border-blue-600 rounded text-xs text-blue-900 font-semibold">
-            <strong>Capstone Project Notice:</strong> This application is developed and deployed strictly for the Capstone 2 project purposes of the following Information Technology (IT) students of De La Salle Lipa: Castillo, Lana Lee L., Malasmas, Ira Denise M., Nora, Ethan Josh N., and Sales, Dave Anthony A.
+            <strong>Capstone Project Notice:</strong> Deployed for academic testing and evaluation by De La Salle Lipa Information Technology students: Castillo, Lana Lee L., Malasmas, Ira Denise M., Nora, Ethan Josh N., and Sales, Dave Anthony A.
           </div>
 
           <p className="italic text-xs text-gray-600">
-            By registering an account and using the iReport platform, you explicitly agree to be bound by the terms and conditions of this EULA. If you do not agree, do not use the application.
+            By authenticating into and operating the iReport Web Command Center, you explicitly agree to follow all operational protocols, confidentiality guidelines, and data protection mandates defined below.
           </p>
 
           <div className="space-y-4 pt-2">
             <div>
-              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">1. User Eligibility and Registration</h3>
-              <p className="mt-1"><strong>Identity Verification:</strong> Access is restricted to verified residents of Mataasnakahoy. Valid government or student ID submission is required during registration.</p>
-              <p className="mt-1"><strong>Accountability:</strong> You confirm that all submitted registration details are accurate.</p>
+              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">1. Authorized Administrative Access</h3>
+              <p className="mt-1"><strong>Access Limits:</strong> Portal access is exclusively reserved for verified emergency dispatch officers of Mataasnakahoy (Police, Fire, and Medical units).</p>
+              <p className="mt-1"><strong>Credential Security:</strong> Account credentials are strictly non-transferable. Every case status modification, severity override, and resolution note is logged under your active session.</p>
             </div>
 
             <div>
-              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">2. Scope of Service and Limitations</h3>
-              <p className="mt-1"><strong>Geographical Limits:</strong> Reports submitted outside Mataasnakahoy GPS coordinates will be automatically rejected.</p>
-              <p className="mt-1"><strong>Incident Categories:</strong> Only Vehicle Accidents, Health Emergencies, and Fire Incidents are supported.</p>
-              <p className="mt-1"><strong>Submission Format:</strong> Requires a mandatory 4-angle (N, E, S, W) image capture format. Video uploads and offline reporting are not supported.</p>
-              <p className="mt-1"><strong>Requirements:</strong> Android 8.0+ operating system and active internet connection (4G/5G/Wi-Fi).</p>
+              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">2. Data Privacy & Confidentiality Compliance</h3>
+              <p className="mt-1"><strong>PII Protection:</strong> In compliance with the Data Privacy Act of 2012 (RA 10173), administrators must protect all citizen personal data, contact details, and submitted valid identification images.</p>
+              <p className="mt-1"><strong>Anonymous Audit Protocol:</strong> Unmasked reporter email addresses and government IDs provided for anonymous reports are strictly for administrative fraud verification and legal auditing. Disclosing citizen identities to unauthorized third parties is strictly prohibited.</p>
             </div>
 
             <div>
-              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">3. User Responsibilities and Anonymity</h3>
-              <p className="mt-1"><strong>Anonymous Reporting:</strong> Identity is hidden from public views, but LGU Department Heads retain full audit visibility of verified IDs to prevent abuse.</p>
-              <p className="mt-1"><strong>Prank Reports:</strong> Fraudulent reporting results in immediate account deactivation and potential legal action.</p>
-              <p className="mt-1"><strong>Emergency Hotlines:</strong> Dial 911 directly during system outages or critical emergencies.</p>
+              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">3. Incident Lifecycle & Dispatch Rules</h3>
+              <p className="mt-1"><strong>Severity & Dispatch Updates:</strong> Admins are responsible for verifying citizen-submitted 4-angle incident evidence before setting severity levels (Critical, High, Medium, Low) and updating status fields (Dispatched, Awaiting Closure, Further Study, Case Closed).</p>
+              <p className="mt-1"><strong>Resolution Documentation:</strong> Closing a case requires submitting accurate department resolution notes and verification photo evidence into the multi-agency record system.</p>
             </div>
 
             <div>
-              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">4. Data Privacy and Lifecycle Management</h3>
-              <p className="mt-1">Compliant with the Data Privacy Act of 2012. Features automated AI bystander face blurring. Records are kept in active storage for 1 year, archived for 5 years, and permanently deleted thereafter.</p>
+              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">4. Official Print Dossier Distribution</h3>
+              <p className="mt-1"><strong>Confidential Dossiers:</strong> Generated PDF dossiers printed from the History Archive contain sensitive incident logs and visual evidence. These documents are classified as confidential LGU records and must be handled in accordance with official department record management rules.</p>
             </div>
 
             <div>
-              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">5. ARTA Compliance and Feedback</h3>
-              <p className="mt-1">In compliance with RA 11032 (Ease of Doing Business Act), digital feedback and complaint forms are accessible within application settings.</p>
-            </div>
-
-            <div>
-              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">6. Disclaimer of Liability</h3>
-              <p className="mt-1">Provided on an "as-is" basis for academic capstone evaluation. Developers and LGU entities are exempt from liability regarding dispatch delays caused by device or network failures.</p>
+              <h3 className="font-black text-gray-900 uppercase text-xs tracking-wider">5. Liability & Redundancy Disclaimer</h3>
+              <p className="mt-1"><strong>System Redundancy:</strong> While iReport provides real-time emergency dispatching, Command Center operations should maintain standard radio frequencies and telephone dispatch lines to ensure continuous service during network interruptions.</p>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Modal Footer */}
         <div className="bg-gray-100 px-6 py-3 border-t border-gray-200 flex justify-end shrink-0">
           <button
+            type="button"
             onClick={onClose}
-            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs uppercase px-5 py-2 rounded shadow transition-all"
+            className="bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold text-xs uppercase px-5 py-2 rounded shadow transition-all cursor-pointer"
           >
-            Close EULA
+            Acknowledge & Close EULA
           </button>
         </div>
 
