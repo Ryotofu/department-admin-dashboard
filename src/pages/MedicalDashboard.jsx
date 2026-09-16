@@ -894,7 +894,7 @@ snapshot.docChanges().forEach((change) => {
           isOpen={isAlarmOpen}
           onClose={() => setIsAlarmOpen(false)}
           reportData={incomingReport}
-          departmentName="MEDICAL"
+          departmentName="health"
         />
 
     </>
