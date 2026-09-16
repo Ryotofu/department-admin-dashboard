@@ -880,8 +880,8 @@ snapshot.docChanges().forEach((change) => {
         {/* 📖 PLACE THE MODAL HERE (Outside the print container)     */}
         {/* ========================================================= */}
 <InstructionManualModal 
-  isOpen={isModalOpen} 
-  onClose={() => setIsModalOpen(false)} 
+  isOpen={isManualOpen} 
+  onClose={() => setIsManualOpen(false)} 
   department="health" 
 />
 

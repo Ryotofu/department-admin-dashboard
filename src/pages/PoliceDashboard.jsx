@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { useState, useEffect, useRef } from 'react';import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Link } from 'react-router-dom';
 import HistoryAnalytics from './HistoryAnalytics';
@@ -886,9 +885,10 @@ snapshot.docChanges().forEach((change) => {
 {/* ========================================================= */}
         {/* 📖 PLACE THE MODAL HERE (Outside the print container)     */}
         {/* ========================================================= */}
+{/* 📖 Instruction Manual Modal */}
 <InstructionManualModal 
-  isOpen={isModalOpen} 
-  onClose={() => setIsModalOpen(false)} 
+  isOpen={isManualOpen} 
+  onClose={() => setIsManualOpen(false)} 
   department="police" 
 />
 
