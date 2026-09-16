@@ -870,10 +870,11 @@ snapshot.docChanges().forEach((change) => {
 {/* ========================================================= */}
         {/* 📖 PLACE THE MODAL HERE (Outside the print container)     */}
         {/* ========================================================= */}
-        <InstructionManualModal
-          isOpen={isManualOpen}
-          onClose={() => setIsManualOpen(false)}
-        />
+<InstructionManualModal 
+  isOpen={isModalOpen} 
+  onClose={() => setIsModalOpen(false)} 
+  department="fire" 
+/>
 
         <EulaModal
   isOpen={isEulaOpen}
@@ -885,7 +886,7 @@ snapshot.docChanges().forEach((change) => {
           isOpen={isAlarmOpen}
           onClose={() => setIsAlarmOpen(false)}
           reportData={incomingReport}
-          departmentName="fire"
+          departmentName="FIRE"
         />
 
     </>
