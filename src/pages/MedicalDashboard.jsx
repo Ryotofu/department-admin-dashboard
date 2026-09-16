@@ -5,8 +5,10 @@ import { Link } from 'react-router-dom';
 import HistoryAnalytics from './HistoryAnalytics';
 import InstructionManualModal from './InstructionManualModal';
 import IncomingReportModal from './IncomingReportModal';
+import EulaModal from './EulaModal'; // Adjust relative path as needed
 
 function MedicalDashboard() {
+  const [isEulaOpen, setIsEulaOpen] = useState(false);
   const [reports, setReports] = useState([]);
   const [incomingReport, setIncomingReport] = useState(null);
 const [isAlarmOpen, setIsAlarmOpen] = useState(false);
@@ -181,19 +183,22 @@ snapshot.docChanges().forEach((change) => {
     {/* Right Side Container: Separates Action Buttons from the Logout Link */}
     <div className="flex items-center gap-4">
       
-      {/* 📖 Manual Action Button */}
-      <div className="flex gap-2">
-        <button 
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsManualOpen(true);
-          }}
-          className="px-3 py-1.5 bg-green-800 border border-green-300/40 text-white font-bold text-xs rounded hover:bg-green-900 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
-        >
-          📖 Manual
-        </button>
-      </div>
+<div className="flex gap-2">
+  <button 
+    type="button"
+    onClick={() => setIsEulaOpen(true)}
+    className="px-3 py-1.5 bg-blue-900 border border-blue-400/30 text-white font-bold text-xs rounded hover:bg-blue-950 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+  >
+    📜 EULA
+  </button>
+  <button 
+    type="button"
+    onClick={() => setIsManualOpen(true)}
+    className="px-3 py-1.5 bg-blue-900 border border-blue-400/30 text-white font-bold text-xs rounded hover:bg-blue-950 transition-all flex items-center gap-1 shadow-sm cursor-pointer"
+  >
+    📖 Manual
+  </button>
+</div>
 
       {/* 👤 Logout Navigation Link */}
       <Link 
@@ -878,6 +883,11 @@ snapshot.docChanges().forEach((change) => {
           isOpen={isManualOpen}
           onClose={() => setIsManualOpen(false)}
         />
+
+        <EulaModal
+  isOpen={isEulaOpen}
+  onClose={() => setIsEulaOpen(false)}
+/>
 
         {/* 🚨 INCOMING EMERGENCY REPORT ALARM MODAL */}
         <IncomingReportModal 
