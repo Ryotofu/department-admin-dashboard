@@ -5,6 +5,7 @@ import HistoryAnalytics from './HistoryAnalytics';
 import InstructionManualModal from './InstructionManualModal';
 import IncomingReportModal from './IncomingReportModal';
 import EulaModal from './EulaModal'; // Adjust relative path as needed
+import AdminChatBox from './AdminChatBox';
 
 function PoliceDashboard() {
   const [isEulaOpen, setIsEulaOpen] = useState(false);
@@ -480,6 +481,16 @@ snapshot.docChanges().forEach((change) => {
                       </div>
                       
                       <div className="font-bold text-gray-500 text-sm uppercase mb-1 mt-2">Citizen Description</div>
+<div className="font-semibold text-gray-700 bg-white p-3 border border-gray-300 rounded">
+  {selectedReport.description || 'No description provided by citizen.'}
+</div>
+
+{/* 💬 POLICE DEPT ADMIN CHAT BOX */}
+<AdminChatBox 
+  reportId={selectedReport.id} 
+  department="police" 
+  recipientEmail={selectedReport.actualReporterEmail || selectedReport.email} 
+/>
                       <div className="font-semibold text-gray-700 bg-white p-3 border border-gray-300 rounded">
                         {selectedReport.description || 'No description provided by citizen.'}
                       </div>
