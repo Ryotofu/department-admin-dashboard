@@ -16,17 +16,17 @@ export default function AdminChatBox({ reportId, department, recipientEmail }) {
   const [text, setText] = useState('');
   const messagesEndRef = useRef(null);
 
-  // 🔄 Real-time listener for report messages
+// 💬 Real-time listener for report messages (All citizen & responder messages)
   useEffect(() => {
     if (!reportId) return;
 
     const messagesRef = collection(db, 'reports', reportId, 'messages');
-    const q = query(messagesRef, where('department', '==', department.toLowerCase()));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    // Listens to all messages under this report without excluding citizen entries
+    const unsubscribe = onSnapshot(messagesRef, (snapshot) => {
       const fetchedMsgs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      // Fast in-memory sort by timestamp
+      // Sort in-memory by timestamp safely (handles pending server timestamps)
       fetchedMsgs.sort((a, b) => {
         const timeA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp || 0);
         const timeB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp || 0);
@@ -37,7 +37,7 @@ export default function AdminChatBox({ reportId, department, recipientEmail }) {
     });
 
     return () => unsubscribe();
-  }, [reportId, department]);
+  }, [reportId]);
 
   // 📜 Auto-scroll to bottom on new message
   useEffect(() => {
