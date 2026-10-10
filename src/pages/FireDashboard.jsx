@@ -25,6 +25,48 @@ const [isAlarmOpen, setIsAlarmOpen] = useState(false);
   // Print-specific States (Aligned with Police Dashboard)
   const [checkedReportIds, setCheckedReportIds] = useState([]);
   const [printOrientation, setPrintOrientation] = useState('portrait'); // 'portrait' or 'landscape'
+  // 📍 Reverse Geocoding & Image Zoom Modal States
+const [geoAddress, setGeoAddress] = useState('');
+const [geoLandmark, setGeoLandmark] = useState('');
+const [enlargedAngleImage, setEnlargedAngleImage] = useState(null);
+
+// 🌐 Automatically converts raw GPS coordinates to readable address & landmark
+useEffect(() => {
+  if (!selectedReport) return;
+  
+  setGeoAddress('');
+  setGeoLandmark('');
+
+  const locString = selectedReport.location || selectedReport.address || '';
+  const isCoords = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(locString.trim());
+
+  if (isCoords || (selectedReport.latitude && selectedReport.longitude)) {
+    const lat = selectedReport.latitude || locString.split(',')[0].trim();
+    const lng = selectedReport.longitude || locString.split(',')[1].trim();
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.address) {
+          const addr = data.address;
+          const street = addr.road || addr.pedestrian || addr.suburb || '';
+          const brgy = addr.village || addr.neighbourhood || addr.quarter || addr.suburb || '';
+          const town = addr.town || addr.city || addr.municipality || 'Mataasnakahoy';
+          
+          const formattedAddress = [street, brgy, town].filter(Boolean).join(', ');
+          if (formattedAddress) setGeoAddress(formattedAddress);
+
+          const landmarkPOI = addr.amenity || addr.building || addr.shop || addr.tourism || addr.historic || addr.leisure || '';
+          if (landmarkPOI) {
+            setGeoLandmark(`Near ${landmarkPOI} (${brgy || town})`);
+          } else if (street || brgy) {
+            setGeoLandmark(`${street ? 'Along ' + street : ''} ${brgy ? '• Brgy. ' + brgy : ''}`);
+          }
+        }
+      })
+      .catch(err => console.error("Geocoding lookup failed:", err));
+  }
+}, [selectedReport]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'reports'), (snapshot) => {
@@ -383,7 +425,12 @@ snapshot.docChanges().forEach((change) => {
 <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm mb-4">
   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-gray-100">
     <div className="font-black text-lg text-gray-900 break-words flex-1 min-w-0">
-      📍 {selectedReport.location || selectedReport.address || (selectedReport.latitude && selectedReport.longitude ? `${selectedReport.latitude}, ${selectedReport.longitude}` : 'Unknown Location')}
+      📍 {geoAddress || selectedReport.location || selectedReport.address || (selectedReport.latitude && selectedReport.longitude ? `${selectedReport.latitude}, ${selectedReport.longitude}` : 'Unknown Location')}
+      {geoAddress && (
+        <span className="block text-xs text-gray-500 font-mono font-normal mt-0.5">
+          GPS: {selectedReport.location || `${selectedReport.latitude}, ${selectedReport.longitude}`}
+        </span>
+      )}
     </div>
     <a 
       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedReport.location || selectedReport.address || `${selectedReport.latitude},${selectedReport.longitude}` || 'Unknown')}`}
@@ -397,13 +444,13 @@ snapshot.docChanges().forEach((change) => {
   </div>
 
   {/* 🚩 NEARBY LANDMARK BADGE */}
-  {(selectedReport.nearestLandmark || selectedReport.landmark || selectedReport.locationName || selectedReport.street || selectedReport.barangay) ? (
+  {(geoLandmark || selectedReport.nearestLandmark || selectedReport.landmark || selectedReport.locationName || selectedReport.street || selectedReport.barangay) ? (
     <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5 text-xs">
       <span className="text-base shrink-0">🚩</span>
       <div className="min-w-0 flex-1 break-words">
         <span className="font-black text-amber-900 uppercase block">Nearby Landmark / Area Details:</span>
         <p className="font-bold text-amber-800 mt-0.5 leading-relaxed">
-          {[
+          {geoLandmark || [
             selectedReport.nearestLandmark || selectedReport.landmark || selectedReport.locationName,
             selectedReport.street ? `Street: ${selectedReport.street}` : null,
             selectedReport.barangay ? `Brgy: ${selectedReport.barangay}` : null
@@ -569,45 +616,80 @@ snapshot.docChanges().forEach((change) => {
                     </div>
                   </div>
 
-                  {/* Right Column */}
-                  <div className="w-full lg:w-[450px] shrink-0 flex flex-col items-center">
-                    <div className="font-black text-lg mb-4 uppercase tracking-wider bg-black text-white w-full text-center py-2 rounded">
-                      Incident Evidence (4 Angles)
-                    </div>
-                    
-                    {selectedReport.anglesBase64 && typeof selectedReport.anglesBase64 === 'object' ? (
-                      <div className="grid grid-cols-2 gap-3 w-full">
-                        {['North', 'East', 'West', 'South'].map((direction) => {
-                          const base64 = selectedReport.anglesBase64[direction];
-                          return (
-                            <div key={direction} className="relative bg-black rounded shadow-md h-[200px] overflow-hidden border-2 border-gray-800">
-                              {base64 ? (
-                                <>
-                                  <img src={`data:image/jpeg;base64,${base64}`} alt={`${direction} view`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-300" />
-                                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent pt-4 pb-1">
-                                    <div className="text-white font-black text-center uppercase tracking-widest text-sm">🧭 {direction.toUpperCase()}</div>
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 font-bold uppercase bg-neutral-900">
-                                  <span className="text-2xl mb-1">🧭</span>
-                                  <span>{direction.toUpperCase()}</span>
-                                  <span className="text-[10px] text-red-500 mt-1">MISSING</span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : selectedReport.imageBase64 ? (
-                      <div className="w-full h-[412px] border-2 border-gray-800 rounded shadow-md overflow-hidden bg-black relative">
-                        <img src={`data:image/jpeg;base64,${selectedReport.imageBase64}`} alt="Legacy Single View" className="w-full h-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className="w-full h-[412px] bg-neutral-900 text-gray-400 flex flex-col items-center justify-center font-bold border-2 border-gray-800 rounded shadow-md">
-                        <span className="text-5xl mb-3">📷</span>NO IMAGES UPLOADED
-                      </div>
-                    )}
+ {/* Right Column: Uncropped Images & Click-to-Zoom */}
+<div className="w-full lg:w-[450px] shrink-0 flex flex-col items-center">
+  <div className="font-black text-lg mb-4 uppercase tracking-wider bg-black text-white w-full text-center py-2 rounded">
+    Incident Evidence (4 Angles - Click to Zoom)
+  </div>
+  
+  {selectedReport.anglesBase64 && typeof selectedReport.anglesBase64 === 'object' ? (
+    <div className="grid grid-cols-2 gap-3 w-full">
+      {['North', 'East', 'West', 'South'].map((direction) => {
+        const base64 = selectedReport.anglesBase64[direction];
+        return (
+          <div key={direction} className="relative bg-black rounded shadow-md h-[200px] overflow-hidden border-2 border-gray-800 group">
+            {base64 ? (
+              <>
+                <img 
+                  src={`data:image/jpeg;base64,${base64}`} 
+                  alt={`${direction} view`} 
+                  className="w-full h-full object-contain bg-black cursor-pointer group-hover:scale-105 transition-transform duration-300" 
+                  onClick={() => setEnlargedAngleImage({ src: `data:image/jpeg;base64,${base64}`, title: `${direction.toUpperCase()} ANGLE` })}
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent pt-4 pb-1 pointer-events-none">
+                  <div className="text-white font-black text-center uppercase tracking-widest text-sm">🧭 {direction.toUpperCase()}</div>
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 font-bold uppercase bg-neutral-900">
+                <span className="text-2xl mb-1">🧭</span>
+                <span>{direction.toUpperCase()}</span>
+                <span className="text-[10px] text-red-500 mt-1">MISSING</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  ) : selectedReport.imageBase64 ? (
+    <div className="w-full h-[412px] border-2 border-gray-800 rounded shadow-md overflow-hidden bg-black relative">
+      <img 
+        src={`data:image/jpeg;base64,${selectedReport.imageBase64}`} 
+        alt="Legacy Single View" 
+        className="w-full h-full object-contain bg-black cursor-pointer" 
+        onClick={() => setEnlargedAngleImage({ src: `data:image/jpeg;base64,${selectedReport.imageBase64}`, title: 'MAIN ANGLE' })}
+      />
+    </div>
+  ) : (
+    <div className="w-full h-[412px] bg-neutral-900 text-gray-400 flex flex-col items-center justify-center font-bold border-2 border-gray-800 rounded shadow-md">
+      <span className="text-5xl mb-3">📷</span>NO IMAGES UPLOADED
+    </div>
+  )}
+
+  {/* 🔍 FULLSCREEN IMAGE ENLARGER MODAL */}
+  {enlargedAngleImage && (
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-90 p-4"
+      onClick={() => setEnlargedAngleImage(null)}
+    >
+      <div className="relative bg-black border-2 border-blue-500 rounded-lg overflow-hidden max-w-[90vw] max-h-[90vh] flex flex-col items-center p-2">
+        <button 
+          onClick={() => setEnlargedAngleImage(null)}
+          className="absolute top-2 right-2 text-white bg-red-600 hover:bg-red-700 font-bold text-sm px-3 py-1 rounded-full z-50 shadow"
+        >
+          ✕ Close
+        </button>
+        <img 
+          src={enlargedAngleImage.src} 
+          alt={enlargedAngleImage.title} 
+          className="max-w-full max-h-[80vh] object-contain rounded"
+        />
+        <div className="text-white font-black text-sm mt-2 tracking-widest uppercase">
+          {enlargedAngleImage.title}
+        </div>
+      </div>
+    </div>
+  )}
 
                     {/* MULTI-AGENCY RESOLUTION REPORTS */}
                     <div className="w-full mt-8 flex flex-col gap-4">
