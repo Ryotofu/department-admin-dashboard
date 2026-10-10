@@ -380,37 +380,43 @@ snapshot.docChanges().forEach((change) => {
                       
 {/* 📍 CLICKABLE LOCATION MAP & LANDMARK */}
 <div className="font-bold text-gray-500 text-sm uppercase mb-1">Location & Nearby Landmark</div>
-<div className="font-black text-xl mb-3">
-  <a 
-    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedReport.location || selectedReport.address || `${selectedReport.latitude},${selectedReport.longitude}` || 'Unknown')}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-600 hover:text-blue-800 underline flex items-center gap-2 w-fit transition-colors"
-    title="Click to open in Google Maps"
-  >
-    📍 {selectedReport.location || selectedReport.address || (selectedReport.latitude && selectedReport.longitude ? `${selectedReport.latitude}, ${selectedReport.longitude}` : 'Unknown')}
-    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full no-underline ml-2 shadow-sm">
-      View on Map ↗
-    </span>
-  </a>
-</div>
-
-{/* 🚩 NEARBY LANDMARK BADGE */}
-{(selectedReport.landmark || selectedReport.locationName || selectedReport.street || selectedReport.barangay) && (
-  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-xs">
-    <span className="text-base">🚩</span>
-    <div>
-      <span className="font-black text-amber-900 uppercase block">Nearby Landmark / Area Details:</span>
-      <p className="font-bold text-amber-800 mt-0.5">
-        {[
-          selectedReport.landmark || selectedReport.locationName,
-          selectedReport.street ? `Street: ${selectedReport.street}` : null,
-          selectedReport.barangay ? `Brgy: ${selectedReport.barangay}` : null
-        ].filter(Boolean).join(' • ')}
-      </p>
+<div className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm mb-4">
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-gray-100">
+    <div className="font-black text-lg text-gray-900 break-words flex-1 min-w-0">
+      📍 {selectedReport.location || selectedReport.address || (selectedReport.latitude && selectedReport.longitude ? `${selectedReport.latitude}, ${selectedReport.longitude}` : 'Unknown Location')}
     </div>
+    <a 
+      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedReport.location || selectedReport.address || `${selectedReport.latitude},${selectedReport.longitude}` || 'Unknown')}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-1.5 rounded-full transition-colors w-fit shadow-sm"
+      title="Click to open in Google Maps"
+    >
+      View on Map ↗
+    </a>
   </div>
-)}
+
+  {/* 🚩 NEARBY LANDMARK BADGE */}
+  {(selectedReport.nearestLandmark || selectedReport.landmark || selectedReport.locationName || selectedReport.street || selectedReport.barangay) ? (
+    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2.5 text-xs">
+      <span className="text-base shrink-0">🚩</span>
+      <div className="min-w-0 flex-1 break-words">
+        <span className="font-black text-amber-900 uppercase block">Nearby Landmark / Area Details:</span>
+        <p className="font-bold text-amber-800 mt-0.5 leading-relaxed">
+          {[
+            selectedReport.nearestLandmark || selectedReport.landmark || selectedReport.locationName,
+            selectedReport.street ? `Street: ${selectedReport.street}` : null,
+            selectedReport.barangay ? `Brgy: ${selectedReport.barangay}` : null
+          ].filter(Boolean).join(' • ')}
+        </p>
+      </div>
+    </div>
+  ) : (
+    <div className="p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs text-gray-500 font-bold flex items-center gap-2">
+      <span>🚩</span> Landmark: <span className="font-normal italic">No nearby landmark captured for this report.</span>
+    </div>
+  )}
+</div>
                       
                       {/* 👤 REPORTER & ID VISUALIZER */}
                       <div className="font-bold text-gray-500 text-sm uppercase mb-1">Reported By & Verification ID</div>
