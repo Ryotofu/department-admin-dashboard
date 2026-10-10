@@ -378,27 +378,44 @@ snapshot.docChanges().forEach((change) => {
                   <div className="flex-1 flex flex-col gap-6">
                     <div className="bg-gray-50 p-5 rounded border border-gray-200 shadow-inner">
                       
-                      {/* 📍 CLICKABLE LOCATION MAP */}
-                      <div className="font-bold text-gray-500 text-sm uppercase mb-1">Location</div>
-                      <div className="font-black text-xl mb-4">
-                        <a 
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedReport.location || selectedReport.address || 'Unknown')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 underline flex items-center gap-2 w-fit transition-colors"
-                          title="Click to open in Google Maps"
-                        >
-                          📍 {selectedReport.location || selectedReport.address || 'Unknown'}
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full no-underline ml-2 shadow-sm">
-                            View on Map ↗
-                          </span>
-                        </a>
-                      </div>
+{/* 📍 CLICKABLE LOCATION MAP & LANDMARK */}
+<div className="font-bold text-gray-500 text-sm uppercase mb-1">Location & Nearby Landmark</div>
+<div className="font-black text-xl mb-3">
+  <a 
+    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedReport.location || selectedReport.address || `${selectedReport.latitude},${selectedReport.longitude}` || 'Unknown')}`}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-blue-600 hover:text-blue-800 underline flex items-center gap-2 w-fit transition-colors"
+    title="Click to open in Google Maps"
+  >
+    📍 {selectedReport.location || selectedReport.address || (selectedReport.latitude && selectedReport.longitude ? `${selectedReport.latitude}, ${selectedReport.longitude}` : 'Unknown')}
+    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full no-underline ml-2 shadow-sm">
+      View on Map ↗
+    </span>
+  </a>
+</div>
+
+{/* 🚩 NEARBY LANDMARK BADGE */}
+{(selectedReport.landmark || selectedReport.locationName || selectedReport.street || selectedReport.barangay) && (
+  <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 text-xs">
+    <span className="text-base">🚩</span>
+    <div>
+      <span className="font-black text-amber-900 uppercase block">Nearby Landmark / Area Details:</span>
+      <p className="font-bold text-amber-800 mt-0.5">
+        {[
+          selectedReport.landmark || selectedReport.locationName,
+          selectedReport.street ? `Street: ${selectedReport.street}` : null,
+          selectedReport.barangay ? `Brgy: ${selectedReport.barangay}` : null
+        ].filter(Boolean).join(' • ')}
+      </p>
+    </div>
+  </div>
+)}
                       
                       {/* 👤 REPORTER & ID VISUALIZER */}
                       <div className="font-bold text-gray-500 text-sm uppercase mb-1">Reported By & Verification ID</div>
                       <div className="flex items-center gap-6 mb-4 bg-white p-3 border border-gray-200 rounded shadow-sm">
-                        
+{/* Email/Name & Phone Info */}
                         <div className="font-black text-lg text-gray-800 flex-1">
                           {selectedReport.isAnonymous ? (
                             <div className="flex flex-col gap-1 text-red-600">
@@ -406,9 +423,17 @@ snapshot.docChanges().forEach((change) => {
                               <span className="text-xs bg-red-50 text-red-800 px-2 py-1 rounded border border-red-200 w-fit">
                                 Real Email: {selectedReport.actualReporterEmail || 'Unknown'}
                               </span>
+                              <span className="text-xs bg-red-50 text-red-900 px-2 py-1 rounded border border-red-200 w-fit font-bold">
+                                📞 Phone: {selectedReport.reporterPhone || selectedReport.phoneNumber || 'No Phone Provided'}
+                              </span>
                             </div>
                           ) : (
-                            <span className="flex items-center gap-2">👤 {selectedReport.reporterName || selectedReport.email || 'Unknown'}</span>
+                            <div className="flex flex-col gap-1">
+                              <span className="flex items-center gap-2">👤 {selectedReport.reporterName || selectedReport.email || 'Unknown'}</span>
+                              <span className="text-xs bg-red-50 text-red-900 px-2 py-1 rounded border border-red-200 w-fit font-bold">
+                                📞 Phone: {selectedReport.reporterPhone || selectedReport.phoneNumber || 'No Phone Provided'}
+                              </span>
+                            </div>
                           )}
                         </div>
 
@@ -733,9 +758,13 @@ snapshot.docChanges().forEach((change) => {
                         <span className="font-extrabold text-gray-600">Identity:</span>{' '}
                         {report.isAnonymous ? '🕵️ Declared Anonymous Citizen' : (report.reporterName || 'Unknown')}
                       </p>
-                      <p className="text-xs mb-3">
+<p className="text-xs mb-1">
                         <span className="font-extrabold text-gray-600">Registered Email:</span>{' '}
                         {report.isAnonymous ? `Hidden (Audited: ${report.actualReporterEmail})` : (report.email || 'N/A')}
+                      </p>
+                      <p className="text-xs mb-3">
+                        <span className="font-extrabold text-gray-600">Contact Number:</span>{' '}
+                        {report.reporterPhone || report.phoneNumber || 'No Phone Provided'}
                       </p>
                     </div>
                     <div>
