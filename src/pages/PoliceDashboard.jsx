@@ -66,19 +66,20 @@ useEffect(() => {
   }
 }, [selectedReport]);
 
-  useEffect(() => {
+useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'reports'), (snapshot) => {
-      // Add this inside useEffect before mapping docs:
-snapshot.docChanges().forEach((change) => {
-  if (change.type === 'added') {
-    const newDoc = { id: change.doc.id, ...change.doc.data() };
-    const status = (newDoc.policeStatus || newDoc.status || 'PENDING').toUpperCase();
-    if (status === 'PENDING') {
-      setIncomingReport(newDoc);
-      setIsAlarmOpen(true);
-    }
-  }
-});
+      // 🚨 Incoming report alarm listener targeted specifically for Police Dept
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const newDoc = { id: change.doc.id, ...change.doc.data() };
+          const status = (newDoc.policeStatus || newDoc.status || 'PENDING').toUpperCase();
+          if (status === 'PENDING') {
+            setIncomingReport(newDoc);
+            setIsAlarmOpen(true);
+          }
+        }
+      });
+
       const reportsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       const policeReports = reportsData.filter(r => {
@@ -90,7 +91,6 @@ snapshot.docChanges().forEach((change) => {
         const title = (r.incidentTitle || '').toUpperCase();
         const role = (r.requestedRole || '').toUpperCase();
 
-        // Police Department category filters
         const categoryMatch = 
           title.includes('POLICE') || 
           role.includes('POLICE') || 

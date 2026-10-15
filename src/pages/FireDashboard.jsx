@@ -68,19 +68,20 @@ useEffect(() => {
   }
 }, [selectedReport]);
 
-  useEffect(() => {
+useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'reports'), (snapshot) => {
-      // Add this inside useEffect before mapping docs:
-snapshot.docChanges().forEach((change) => {
-  if (change.type === 'added') {
-    const newDoc = { id: change.doc.id, ...change.doc.data() };
-    const status = (newDoc.policeStatus || newDoc.status || 'PENDING').toUpperCase();
-    if (status === 'PENDING') {
-      setIncomingReport(newDoc);
-      setIsAlarmOpen(true);
-    }
-  }
-});
+      // 🚨 Incoming report alarm listener targeted specifically for Fire Dept
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const newDoc = { id: change.doc.id, ...change.doc.data() };
+          const status = (newDoc.fireStatus || newDoc.status || 'PENDING').toUpperCase();
+          if (status === 'PENDING') {
+            setIncomingReport(newDoc);
+            setIsAlarmOpen(true);
+          }
+        }
+      });
+
       const reportsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       const fireReports = reportsData.filter(r => {
