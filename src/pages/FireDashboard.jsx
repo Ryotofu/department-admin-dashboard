@@ -145,16 +145,61 @@ snapshot.docChanges().forEach((change) => {
     setEditStatus(report.fireStatus || report.status || 'PENDING');
   };
 
-  const handleUpdate = async () => {
+const handleUpdate = async () => {
     if (!selectedReport) return;
     try {
       const reportRef = doc(db, 'reports', selectedReport.id);
+
+      // 1. Detect required departments based on report details
+      const cat = `${selectedReport.reportCategory || ''} ${selectedReport.requestedRole || ''} ${selectedReport.incidentTitle || ''} ${selectedReport.description || ''}`.toLowerCase();
+      
+      const hasFire = cat.includes('fire');
+      const hasPolice = cat.includes('police') || cat.includes('security') || cat.includes('crime') || cat.includes('theft') || cat.includes('robbery') || cat.includes('fight') || cat.includes('accident') || cat.includes('traffic') || cat.includes('suspicious');
+      const hasMedical = cat.includes('medical') || cat.includes('health') || cat.includes('ambulance');
+
+      // Helper check for closed/resolved state
+      const isFinished = (s) => ['CASE CLOSED', 'RESOLVED', 'SOLVED', 'FURTHER STUDY'].includes((s || '').toUpperCase());
+
+      // Current statuses for each department
+      const currentFireStatus = editStatus;
+      const currentPoliceStatus = selectedReport.policeStatus || 'PENDING';
+      const currentMedicalStatus = selectedReport.medicalStatus || selectedReport.healthStatus || 'PENDING';
+
+      // Evaluate completion status for involved departments only
+      let fireDone = !hasFire || isFinished(currentFireStatus);
+      let policeDone = !hasPolice || isFinished(currentPoliceStatus);
+      let medicalDone = !hasMedical || isFinished(currentMedicalStatus);
+
+      // Fallback: If no explicit category matched, treat active department as single required
+      if (!hasFire && !hasPolice && !hasMedical) {
+        fireDone = isFinished(currentFireStatus);
+        policeDone = true;
+        medicalDone = true;
+      }
+
+      const allClosed = fireDone && policeDone && medicalDone;
+
+      // Determine top-level status for LGU Admin
+      let newOverallStatus = selectedReport.status || 'PENDING';
+      if (allClosed) {
+        const statuses = [currentFireStatus, currentPoliceStatus, currentMedicalStatus];
+        if (statuses.some(s => (s || '').toUpperCase() === 'FURTHER STUDY')) {
+          newOverallStatus = 'FURTHER STUDY';
+        } else {
+          newOverallStatus = 'CASE CLOSED';
+        }
+      } else {
+        newOverallStatus = 'DISPATCHED';
+      }
+
+      // Update both department status and overall report status
       await updateDoc(reportRef, { 
         severity: editSeverity, 
-        fireStatus: editStatus 
+        fireStatus: editStatus,
+        status: newOverallStatus
       });
       
-      alert(`Fire Record Updated Successfully!`);
+      alert(`Fire Record Updated Successfully! Overall Status: ${newOverallStatus}`);
       setSelectedReport(null); 
     } catch (error) {
       alert("Failed to update: " + error.message);

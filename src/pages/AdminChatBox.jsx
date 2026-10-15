@@ -5,6 +5,8 @@ import {
   addDoc, 
   doc, 
   updateDoc, 
+  query,
+  where,
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -14,16 +16,22 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
   const [text, setText] = useState('');
   const messagesEndRef = useRef(null);
 
-  // Real-time listener for all report messages across citizens, admins, and responders
+  const cleanDept = department.toLowerCase().trim();
+  const deptUpper = cleanDept.toUpperCase();
+
+  // Real-time listener ISOLATED to this specific department channel
   useEffect(() => {
     if (!reportId) return;
 
     const messagesRef = collection(db, 'reports', reportId, 'messages');
+    
+    // ⚡ Filter Firestore messages by department so admins only see their channel
+    const q = query(messagesRef, where('department', '==', cleanDept));
 
-    const unsubscribe = onSnapshot(messagesRef, (snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedMsgs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      // Sort in-memory by timestamp safely (handles pending local server timestamps)
+      // Sort in-memory by timestamp safely
       fetchedMsgs.sort((a, b) => {
         const timeA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp || 0);
         const timeB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp || 0);
@@ -34,7 +42,7 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
     });
 
     return () => unsubscribe();
-  }, [reportId]);
+  }, [reportId, cleanDept]);
 
   // Auto-scroll to bottom on new message
   useEffect(() => {
@@ -58,18 +66,21 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
       case 'fire':
         return 'bg-red-100 text-red-800 border-red-300';
       case 'health':
+      case 'medical':
         return 'bg-amber-100 text-amber-800 border-amber-300';
       default:
         return 'bg-purple-100 text-purple-800 border-purple-300';
     }
   };
 
-  // Helper to render readable sender label
+  // Helper to render readable sender label with responder ID / Name / Email
   const getSenderLabel = (msg) => {
     if (msg.senderRole === 'citizen') return 'Citizen Reporter';
-    const deptUpper = (msg.department || 'COMMAND CENTER').toUpperCase();
-    if (msg.senderRole === 'responder') return `${deptUpper} Field Unit`;
-    return `${deptUpper} Command Center`;
+    if (msg.senderRole === 'admin') return `${deptUpper} Command Center`;
+
+    // 🏷️ Displays the specific responder email or ID if available
+    const responderIdentity = msg.senderEmail || msg.senderId || 'Field Unit';
+    return `${deptUpper} Responder (${responderIdentity})`;
   };
 
   // Send message to Firestore
@@ -83,17 +94,17 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
     try {
       // 1. Add message document to report messages subcollection
       await addDoc(collection(db, 'reports', reportId, 'messages'), {
-        senderId: `${department.toLowerCase()}_admin`,
-        senderEmail: `${department.toUpperCase()} Command Center`,
+        senderId: `${cleanDept}_admin`,
+        senderEmail: `${deptUpper} Command Center`,
         senderRole: 'admin',
-        department: department.toLowerCase(),
+        department: cleanDept,
         text: msgText,
         timestamp: serverTimestamp(),
       });
 
       // 2. Update parent report metadata
       await updateDoc(doc(db, 'reports', reportId), {
-        lastMessage: `[${department.toUpperCase()}] ${msgText}`,
+        lastMessage: `[${deptUpper}] ${msgText}`,
         lastMessageTime: serverTimestamp(),
         hasUnreadCitizen: true,
         hasUnreadResponder: false,
@@ -109,7 +120,7 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
       <div className="bg-gray-900 text-white px-4 py-3 font-black text-xs uppercase tracking-wider flex justify-between items-center rounded-t-lg border-b border-gray-700">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-          <span>LIVE COMMAND CHANNEL</span>
+          <span>{deptUpper} COMMAND CHANNEL</span>
         </div>
         <span className="text-[11px] text-gray-300 font-semibold truncate max-w-[220px]">
           Citizen: {recipientEmail || 'Anonymous'}
@@ -123,13 +134,13 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
             <svg className="w-8 h-8 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <p className="text-xs font-bold uppercase tracking-wider">No communications recorded</p>
+            <p className="text-xs font-bold uppercase tracking-wider">No {deptUpper} communications recorded</p>
             <p className="text-[11px]">Send an inquiry below to message the citizen or assigned team.</p>
           </div>
         ) : (
           messages.map((msg) => {
-            // Check if active department sent this message
-            const isMe = msg.department === department.toLowerCase() && (msg.senderRole === 'admin' || msg.senderRole === 'responder');
+            // Check if active department admin sent this message
+            const isMe = msg.department === cleanDept && msg.senderRole === 'admin';
 
             return (
               <div
@@ -142,7 +153,7 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
                     {getSenderLabel(msg)}
                   </span>
                   {msg.timestamp && (
-                    <span className="text-[10px] color-gray-400 font-medium">
+                    <span className="text-[10px] text-gray-400 font-medium">
                       {formatTime(msg.timestamp)}
                     </span>
                   )}
@@ -172,7 +183,7 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
         <input
           type="text"
           className="flex-1 border border-gray-300 rounded-lg px-3.5 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-          placeholder={`Broadcast as ${department.toUpperCase()} Command Center...`}
+          placeholder={`Broadcast as ${deptUpper} Command Center...`}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />

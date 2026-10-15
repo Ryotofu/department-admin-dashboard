@@ -155,19 +155,58 @@ snapshot.docChanges().forEach((change) => {
     setEditStatus(report.policeStatus || report.status || 'PENDING');
   };
 
-  const handleUpdate = async () => {
+const handleUpdate = async () => {
     if (!selectedReport) return;
     try {
-        const reportRef = doc(db, 'reports', selectedReport.id);
-        await updateDoc(reportRef, { 
-          severity: editSeverity, 
-          policeStatus: editStatus 
-        });
-        
-        alert(`Police Record Updated Successfully!`);
-        setSelectedReport(null); 
+      const reportRef = doc(db, 'reports', selectedReport.id);
+
+      // Detect required departments
+      const cat = `${selectedReport.reportCategory || ''} ${selectedReport.requestedRole || ''} ${selectedReport.incidentTitle || ''} ${selectedReport.description || ''}`.toLowerCase();
+      
+      const hasFire = cat.includes('fire');
+      const hasPolice = cat.includes('police') || cat.includes('security') || cat.includes('crime') || cat.includes('theft') || cat.includes('robbery') || cat.includes('fight') || cat.includes('accident') || cat.includes('traffic') || cat.includes('suspicious');
+      const hasMedical = cat.includes('medical') || cat.includes('health') || cat.includes('ambulance');
+
+      const isFinished = (s) => ['CASE CLOSED', 'RESOLVED', 'SOLVED', 'FURTHER STUDY'].includes((s || '').toUpperCase());
+
+      const currentPoliceStatus = editStatus;
+      const currentFireStatus = selectedReport.fireStatus || 'PENDING';
+      const currentMedicalStatus = selectedReport.medicalStatus || selectedReport.healthStatus || 'PENDING';
+
+      let policeDone = !hasPolice || isFinished(currentPoliceStatus);
+      let fireDone = !hasFire || isFinished(currentFireStatus);
+      let medicalDone = !hasMedical || isFinished(currentMedicalStatus);
+
+      if (!hasFire && !hasPolice && !hasMedical) {
+        policeDone = isFinished(currentPoliceStatus);
+        fireDone = true;
+        medicalDone = true;
+      }
+
+      const allClosed = fireDone && policeDone && medicalDone;
+
+      let newOverallStatus = selectedReport.status || 'PENDING';
+      if (allClosed) {
+        const statuses = [currentFireStatus, currentPoliceStatus, currentMedicalStatus];
+        if (statuses.some(s => (s || '').toUpperCase() === 'FURTHER STUDY')) {
+          newOverallStatus = 'FURTHER STUDY';
+        } else {
+          newOverallStatus = 'CASE CLOSED';
+        }
+      } else {
+        newOverallStatus = 'DISPATCHED';
+      }
+
+      await updateDoc(reportRef, { 
+        severity: editSeverity, 
+        policeStatus: editStatus,
+        status: newOverallStatus
+      });
+      
+      alert(`Police Record Updated Successfully! Overall Status: ${newOverallStatus}`);
+      setSelectedReport(null); 
     } catch (error) {
-        alert("Failed to update: " + error.message);
+      alert("Failed to update: " + error.message);
     }
   };
 
