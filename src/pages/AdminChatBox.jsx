@@ -14,12 +14,36 @@ import { db } from '../firebase';
 export default function AdminChatBox({ reportId, department = 'general', recipientEmail }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
+  const [isClosed, setIsClosed] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState('');
   const messagesEndRef = useRef(null);
 
   const cleanDept = department.toLowerCase().trim();
   const deptUpper = cleanDept.toUpperCase();
 
-  // Real-time listener ISOLATED to this specific department channel
+  // 1. Real-time listener for parent report status (CASE CLOSED / FURTHER STUDY lock)
+  useEffect(() => {
+    if (!reportId) return;
+
+    const reportRef = doc(db, 'reports', reportId);
+    const unsubscribeReport = onSnapshot(reportRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        const overall = (data.status || '').toUpperCase().trim();
+        const deptStatus = (data[`${cleanDept}Status`] || data.fireStatus || data.policeStatus || data.medicalStatus || '').toUpperCase().trim();
+
+        const finishedStatuses = ['CASE CLOSED', 'RESOLVED', 'SOLVED', 'FURTHER STUDY'];
+        const closed = finishedStatuses.includes(overall) || finishedStatuses.includes(deptStatus);
+
+        setIsClosed(closed);
+        setCurrentStatus(deptStatus || overall || 'DISPATCHED');
+      }
+    });
+
+    return () => unsubscribeReport();
+  }, [reportId, cleanDept]);
+
+  // 2. Real-time listener ISOLATED to this specific department channel
   useEffect(() => {
     if (!reportId) return;
 
@@ -178,26 +202,35 @@ export default function AdminChatBox({ reportId, department = 'general', recipie
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Bar */}
-      <form onSubmit={handleSend} className="p-2.5 border-t border-gray-200 bg-white flex gap-2 rounded-b-lg">
-        <input
-          type="text"
-          className="flex-1 border border-gray-300 rounded-lg px-3.5 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
-          placeholder={`Broadcast as ${deptUpper} Command Center...`}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <button
-          type="submit"
-          disabled={!text.trim()}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-colors shadow-sm flex items-center gap-1"
-        >
-          <span>Send</span>
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+{/* Input Bar or Read-Only Lock Banner */}
+      {isClosed ? (
+        <div className="p-3 border-t border-gray-200 bg-gray-100 flex items-center justify-center gap-2 rounded-b-lg text-gray-600 font-black text-xs uppercase tracking-wider">
+          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-        </button>
-      </form>
+          <span>Cannot chat anymore — Case Status: {currentStatus}</span>
+        </div>
+      ) : (
+        <form onSubmit={handleSend} className="p-2.5 border-t border-gray-200 bg-white flex gap-2 rounded-b-lg">
+          <input
+            type="text"
+            className="flex-1 border border-gray-300 rounded-lg px-3.5 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+            placeholder={`Broadcast as ${deptUpper} Command Center...`}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+          <button
+            type="submit"
+            disabled={!text.trim()}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-colors shadow-sm flex items-center gap-1"
+          >
+            <span>Send</span>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+        </form>
+      )}
     </div>
   );
 }
